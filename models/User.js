@@ -1,18 +1,22 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
+var emailRegex = /^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/;
+
 var userSchema = new Schema({
     firstName: {
         type: String,
         required: true,
     },
     lastName: {
-        type: Number,
+        type: String,
         required: true
     },
     email: {
         type: String,
-        required: true
+        required: true,
+        match: emailRegex,
+        unique: true
     },
     image: {
         type: String,

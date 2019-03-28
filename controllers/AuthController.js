@@ -42,7 +42,7 @@ var authController = (User) => {
                                 createdOn: userTimeStampInMillis
                             };
 
-                            jwt.sign({ user: apiUser }, 'secretkey', { expiresIn: '1d' }, (errJwt, token) => {
+                            jwt.sign({ user: apiUser }, 'secretkey', { expiresIn: '30d' }, (errJwt, token) => {
                                 if (errJwt) {
                                     console.log(errJwt);
                                     const apiResponse = responseModel(false, errJwt, null);
@@ -100,7 +100,7 @@ var authController = (User) => {
                                     createdOn: userTimeStampInMillis
                                 };
 
-                                jwt.sign({ user: apiUser }, 'secretkey', { expiresIn: '1d' }, (errJwt, token) => {
+                                jwt.sign({ user: apiUser }, 'secretkey', { expiresIn: '30d' }, (errJwt, token) => {
                                     if (errJwt) {
                                         console.log(errJwt);
                                         const apiResponse = responseModel(false, errJwt, null);
@@ -151,6 +151,7 @@ var authController = (User) => {
             res.json(apiResponse);
         }
     };
+    
 
     return {
         postLogin,
