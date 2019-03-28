@@ -4,20 +4,9 @@ const bcrypt = require('bcryptjs');
 
 var authController = (User) => {
 
-    var postLogin = (req, res) => {
-        /*
-        jwt.verify(req.token, 'secretkey', (err, authData) => {
-            if (err) {
-                res.status(403).json({ err });
-            } else {
-                res.json({
-                    message: 'post created',
-                    authData
-                });
-            }
-        });
-        */
+    const { JwtSecret } = require('../config/Keys');
 
+    var postLogin = (req, res) => {
         var requestBody = req.body;
 
         User.findOne({ email: requestBody.email }, (err, user) => {
@@ -42,7 +31,7 @@ var authController = (User) => {
                                 createdOn: userTimeStampInMillis
                             };
 
-                            jwt.sign({ user: apiUser }, 'secretkey', { expiresIn: '30d' }, (errJwt, token) => {
+                            jwt.sign({ user: apiUser }, JwtSecret, { expiresIn: '30d' }, (errJwt, token) => {
                                 if (errJwt) {
                                     console.log(errJwt);
                                     const apiResponse = responseModel(false, errJwt, null);
@@ -66,9 +55,6 @@ var authController = (User) => {
 
     var postSignup = (req, res) => {
         var requestBody = req.body;
-        console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-        console.log(requestBody);
-        console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
         var user = new User(requestBody);
 
         bcrypt.genSalt(10, (errSalt, salt) => {
@@ -84,7 +70,6 @@ var authController = (User) => {
                         res.json(apiResponse);
                     } else {
                         user.password = hash;
-                        console.log("hashhhhhhhhhh");
                         console.log(hash);
                         user.save((err, user) => {
                             if (err) {
@@ -100,7 +85,7 @@ var authController = (User) => {
                                     createdOn: userTimeStampInMillis
                                 };
 
-                                jwt.sign({ user: apiUser }, 'secretkey', { expiresIn: '30d' }, (errJwt, token) => {
+                                jwt.sign({ user: apiUser }, JwtSecret, { expiresIn: '30d' }, (errJwt, token) => {
                                     if (errJwt) {
                                         console.log(errJwt);
                                         const apiResponse = responseModel(false, errJwt, null);
