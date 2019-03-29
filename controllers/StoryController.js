@@ -11,23 +11,43 @@ const storage = multer.diskStorage({
         console.log(req.body);
         console.log(file.filename);
         console.log(file.fieldname);
-        cb(null, new Date().toISOString() + file.originalname);
+        console.log(file.originalname);
+        console.log(file.mimetype);
+        console.log(file);
+        const arrayMimeType = file.mimetype.split('/');
+        const type = arrayMimeType[arrayMimeType.length - 1];
+        //cb(null, new Date().toISOString() + file.originalname);
+        cb(null, file.fieldname + '-' + new Date().toISOString() + '.' + type);
     }
 });
 
-const upload = multer({ storage: storage });
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype === 'image/png' || file.mimetype === 'image/jpeg') {
+        cb(null, true);
+    } else {
+        cb(new multer.MulterError('Accept only png or jpeg'), false);
+    }
+}
+
+const upload = multer(
+    {
+        storage: storage,
+        limits: {
+            fileSize: 1024 * 1024 * 5 //5Mb
+        },
+        fileFilter: fileFilter
+    }
+);
 
 const { JwtSecret, ServerName } = require('../config/Keys');
 
 var storyController = (Story) => {
+
     var postCreate = (req, res) => {
-
-
-
         jwt.verify(req.token, JwtSecret, (err, authData) => {
             if (err) {
                 const apiResponse = responseModel(false, err, null);
-                res.sendStatus(403).json(apiResponse);
+                res.status(403).json(apiResponse);
             } else {
                 const requestBody = req.body;
 
@@ -161,15 +181,57 @@ var storyController = (Story) => {
         } else {
             // Forbidden
             const apiResponse = responseModel(false, "Invalid token", null);
-            res.sendStatus(403).json(apiResponse);
+            res.status(403).json(apiResponse);
         }
     };
 
+    var testUpload = (req, res) => {
+        upload.array('eventsImages', 10)(req, res, (err) => {
+            if (err instanceof multer.MulterError) {
+                // A Multer error occurred when uploading.
+                console.log(err);
+                const apiResponse = responseModel(false, err.code, null);
+                res.status(500).json(apiResponse);
+            } else if (err) {
+                // An unknown error occurred when uploading.
+                console.log(err);
+                const apiResponse = responseModel(false, err, null);
+                res.status(403).json(apiResponse);
+            } else {
+                const apiResponse = responseModel(false, "nothing", null);
+                res.status(403).json(apiResponse);
+            }
+        });
+    };
+
+    var getAll = (req, res) => {
+        jwt.verify(req.token, JwtSecret, (err, authData) => {
+            if (err) {
+                const apiResponse = responseModel(false, err, null);
+                res.status(403).json(apiResponse);
+            } else {
+                var query = {};
+                Story.find(query, (errGet, stories) => {
+                    if (errGet) {
+                        const apiResponse = responseModel(false, errGet, null);
+                        res.status(403).json(apiResponse);
+                    } else {
+                        const apiResponse = responseModel(true, "All Stories", stories);
+                        res.json(apiResponse);
+                    }
+                });
+            }
+        });
+    }
+
+
     return {
         postCreate,
-        verifyToken,
         postUploadFile,
-        upload
+        upload,
+        verifyToken,
+        testUpload,
+        getAll
     };
 };
 
