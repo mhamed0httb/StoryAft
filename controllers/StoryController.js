@@ -189,6 +189,7 @@ var storyController = (Story) => {
     };
 
     var testUpload = (req, res) => {
+        /*
         upload.array('eventsImages', 10)(req, res, (err) => {
             if (err instanceof multer.MulterError) {
                 // A Multer error occurred when uploading.
@@ -202,6 +203,29 @@ var storyController = (Story) => {
                 res.status(403).json(apiResponse);
             } else {
                 const apiResponse = responseModel(false, "nothing", null);
+                res.status(403).json(apiResponse);
+            }
+        });
+        */
+
+        upload.fields([{ name: 'storyImage', maxCount: 1 }, { name: 'eventsImages', maxCount: 10 }])(req, res, (err) => {
+            if (err instanceof multer.MulterError) {
+                // A Multer error occurred when uploading.
+                console.log(err);
+                const apiResponse = responseModel(false, err.code, null);
+                res.status(500).json(apiResponse);
+            } else if (err) {
+                // An unknown error occurred when uploading.
+                console.log(err);
+                const apiResponse = responseModel(false, err, null);
+                res.status(403).json(apiResponse);
+            } else {
+                const fakeApiResponse = {
+                    storyImage: req.files['storyImage'],
+                    eventsImages: req.files['eventsImages']
+                };
+                
+                const apiResponse = responseModel(false, "nothing", fakeApiResponse);
                 res.status(403).json(apiResponse);
             }
         });
