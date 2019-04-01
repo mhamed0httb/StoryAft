@@ -16,7 +16,7 @@ const storage = multer.diskStorage({
         console.log(file);
         const arrayMimeType = file.mimetype.split('/');
         const type = arrayMimeType[arrayMimeType.length - 1];
-        //cb(null, new Date().toISOString() + file.originalname);
+        //cb(null, new Date().toISOString()clear + file.originalname);
         cb(null, file.fieldname + '-' + new Date().toISOString() + '.' + type);
     }
 });
@@ -166,18 +166,21 @@ var storyController = (Story) => {
     }
 
     var verifyToken = (req, res, next) => {
-        // Get auth header value
         const bearerHeader = req.headers['authorization'];
         console.log(bearerHeader);
-        //Check if bearer is undefined
         if (typeof bearerHeader !== 'undefined') {
-            // Split at the space
             const bearer = bearerHeader.split(' ');
-            // Get token from array
             const bearerToken = bearer[1];
-            // Set the token
-            req.token = bearerToken;
-            next();
+            jwt.verify(bearerToken, JwtSecret, (err, authData) => {
+                if (err) {
+                    const apiResponse = responseModel(false, err.message, null);
+                    res.status(403).json(apiResponse);
+                } else {
+                    req.token = bearerToken;
+                    req.authData = authData;
+                    next();
+                }
+            });
         } else {
             // Forbidden
             const apiResponse = responseModel(false, "Invalid token", null);
@@ -205,24 +208,107 @@ var storyController = (Story) => {
     };
 
     var getAll = (req, res) => {
-        jwt.verify(req.token, JwtSecret, (err, authData) => {
-            if (err) {
-                const apiResponse = responseModel(false, err, null);
-                res.status(403).json(apiResponse);
+        var query = {};
+
+        var pageLimit = req.query.limit;
+        var pageNumber = req.query.page;
+
+        if (pageLimit && pageNumber) {
+            var parsedLimit = parseInt(pageLimit, 10);
+            var parsedPage = parseInt(pageNumber, 10);
+
+            if (isNaN(parsedLimit) || isNaN(parsedPage)) {
+                Story.find()
+                    .sort({
+                        createdOn: 'desc'
+                    })
+                    .exec((errGet, stories) => {
+                        if (errGet) {
+                            const apiResponse = responseModel(false, errGet, null);
+                            res.status(500).json(apiResponse);
+                        } else {
+                            const response = formatStoriesForAPI(stories);
+                            const apiData = {
+                                stories: response,
+                                total: response.length
+                            };
+                            const apiResponse = responseModel(true, "All Stories", apiData);
+                            res.json(apiResponse);
+                        }
+                    });
             } else {
-                var query = {};
-                Story.find(query, (errGet, stories) => {
+                Story.find()
+                    .limit(parsedLimit)
+                    .skip(pageLimit * parsedPage)
+                    .sort({
+                        createdOn: 'desc'
+                    })
+                    .exec((errGet, stories) => {
+                        if (errGet) {
+                            const apiResponse = responseModel(false, errGet, null);
+                            res.status(500).json(apiResponse);
+                        } else {
+                            const response = formatStoriesForAPI(stories);
+                            const apiData = {
+                                stories: response,
+                                total: response.length,
+                                pageLimit: parsedLimit,
+                                pageNumber: parsedPage
+                            };
+                            const apiResponse = responseModel(true, "All Stories", apiData);
+                            res.json(apiResponse);
+                        }
+                    });
+            }
+        } else {
+            Story.find()
+                .sort({
+                    createdOn: 'desc'
+                })
+                .exec((errGet, stories) => {
                     if (errGet) {
                         const apiResponse = responseModel(false, errGet, null);
-                        res.status(403).json(apiResponse);
+                        res.status(500).json(apiResponse);
                     } else {
-                        const apiResponse = responseModel(true, "All Stories", stories);
+                        const response = formatStoriesForAPI(stories);
+                        const apiData = {
+                            stories: response,
+                            total: response.length
+                        };
+                        const apiResponse = responseModel(true, "All Stories", apiData);
                         res.json(apiResponse);
                     }
                 });
-            }
+        }
+    };
+
+    var formatStoriesForAPI = (stories) => {
+        const apiStories = [];
+        stories.forEach((item, index) => {
+            const apiEvents = [];
+            stories[index].events.forEach((itemEv, indexEv) => {
+                const eventDateStampInMillis = Math.floor(stories[index].events[indexEv].eventDate / 1000);
+                const oneEvent = {
+                    _id: itemEv._id,
+                    title: itemEv.title,
+                    description: itemEv.description,
+                    coverImage: itemEv.coverImage,
+                    eventDate: eventDateStampInMillis
+                };
+                apiEvents.push(oneEvent);
+            });
+
+            const oneStory = {
+                _id: item._id,
+                title: item.title,
+                description: item.description,
+                coverImage: item.coverImage,
+                events: apiEvents
+            };
+            apiStories.push(oneStory);
         });
-    }
+        return apiStories;
+    };
 
 
     return {
