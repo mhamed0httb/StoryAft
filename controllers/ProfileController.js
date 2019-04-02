@@ -7,9 +7,13 @@ const storage = multer.diskStorage({
         cb(null, './uploads/');
     },
     filename: (req, file, cb) => {
+        console.log("Filename Image");
+        console.log(req.authData.user._id);
+        console.log("/////Filename Image");
         const arrayMimeType = file.mimetype.split('/');
         const type = arrayMimeType[arrayMimeType.length - 1];
-        cb(null, file.fieldname + '-' + new Date().toISOString() + '.' + type);
+        //cb(null, file.fieldname + '-' + new Date().toISOString() + '.' + type);
+        cb(null, req.authData.user._id + '.' + type);
     }
 });
 
