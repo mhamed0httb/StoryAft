@@ -11,6 +11,8 @@ var routes = (Story, User) => {
 
     storyRouter.route('/getAll').get(storyController.verifyToken, storyController.getAll);
 
+    storyRouter.route('/delete/:storyId').delete(storyController.verifyToken, storyController.deleteStory);
+
     return storyRouter;
 };
 

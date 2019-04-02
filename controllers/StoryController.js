@@ -418,6 +418,33 @@ var storyController = (Story, User) => {
         return apiStories;
     };
 
+    var deleteStory = (req, res) => {
+        console.log(req.params.storyId);
+        let storyId = req.params.storyId;
+
+        Story.findById(storyId, (err, story) => {
+            if (err) {
+                const apiResponse = responseModel(false, "Story not found", null);
+                res.status(404).json(apiResponse);
+            } else {
+                story.remove((errRemove) => {
+                    if (errRemove) {
+                        const apiResponse = responseModel(false, errRemove, null);
+                        res.status(404).json(apiResponse);
+                    } else {
+                        const apiResponse = responseModel(true, "Story deleted with success", null);
+                        res.json(apiResponse);
+                    }
+                });
+            }
+        });
+
+
+
+    };
+
+
+
 
     return {
         postCreate,
@@ -425,7 +452,8 @@ var storyController = (Story, User) => {
         upload,
         verifyToken,
         postCreateStory,
-        getAll
+        getAll,
+        deleteStory
     };
 };
 
