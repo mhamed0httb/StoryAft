@@ -188,7 +188,7 @@ var storyController = (Story) => {
         }
     };
 
-    var testUpload = (req, res) => {
+    var postCreateStory = (req, res) => {
         /*
         upload.array('eventsImages', 10)(req, res, (err) => {
             if (err instanceof multer.MulterError) {
@@ -220,13 +220,60 @@ var storyController = (Story) => {
                 const apiResponse = responseModel(false, err, null);
                 res.status(403).json(apiResponse);
             } else {
-                const fakeApiResponse = {
-                    storyImage: req.files['storyImage'],
-                    eventsImages: req.files['eventsImages']
-                };
-                
-                const apiResponse = responseModel(false, "nothing", fakeApiResponse);
-                res.status(403).json(apiResponse);
+                // Begin
+                console.log("BEGIIIIIIIIIN");
+                var story = JSON.parse(req.body.story);
+
+                let eventsLength = story.events.length;
+                let filesLength = req.files['eventsImages'].length;
+
+                if (filesLength != eventsLength) {
+                    const apiResponse = responseModel(false, "Please provide all events images along with the story image", null);
+                    res.json(apiResponse);
+                } else {
+                    req.files['eventsImages'].forEach((item, index) => {
+                        let eventImgPath = ServerName + item.path;
+                        console.log(item.path + ": " + index);
+                        //var parsedEvents = JSON.parse(story.events)
+                        story.events[index].coverImage = eventImgPath;
+                        story.events[index].eventDate = Math.floor(story.events[index].eventDate * 1000);
+                    });
+
+                    let storyImgPath = ServerName + req.files['storyImage'][0].path;
+                    story.coverImage = storyImgPath;
+
+
+                    new Story(story).save((errSave, savedStory) => {
+                        if (errSave) {
+                            const apiResponse = responseModel(false, errSave, null);
+                            res.json(apiResponse);
+                        } else {
+                            const apiEvents = [];
+
+                            savedStory.events.forEach((item, index) => {
+                                const eventDateStampInMillis = Math.floor(savedStory.events[index].eventDate / 1000);
+                                const oneEvent = {
+                                    _id: item._id,
+                                    title: item.title,
+                                    description: item.description,
+                                    coverImage: item.coverImage,
+                                    eventDate: eventDateStampInMillis
+                                };
+                                apiEvents.push(oneEvent);
+                            });
+                            const apiStory = {
+                                _id: savedStory._id,
+                                title: savedStory.title,
+                                description: savedStory.description,
+                                coverImage: savedStory.coverImage,
+                                events: apiEvents
+                            };
+
+                            const apiResponse = responseModel(true, "Story saved successfully", apiStory);
+                            res.json(apiResponse);
+                        }
+                    });
+                }
             }
         });
     };
@@ -340,7 +387,7 @@ var storyController = (Story) => {
         postUploadFile,
         upload,
         verifyToken,
-        testUpload,
+        postCreateStory,
         getAll
     };
 };
