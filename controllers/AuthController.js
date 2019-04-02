@@ -25,6 +25,7 @@ var authController = (User) => {
                         if (result) {
                             const userTimeStampInMillis = Math.floor(user.createdOn / 1000);
                             apiUser = {
+                                _id: user._id,
                                 firstName: user.firstName,
                                 lastName: user.lastName,
                                 email: user.email,
@@ -79,6 +80,7 @@ var authController = (User) => {
                             } else {
                                 const userTimeStampInMillis = Math.floor(user.createdOn / 1000);
                                 apiUser = {
+                                    _id: user._id,
                                     firstName: user.firstName,
                                     lastName: user.lastName,
                                     email: user.email,

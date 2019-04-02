@@ -29,7 +29,7 @@ var port = process.env.PORT || 3000;
 */
 authRouter = require('./routes/AuthRoutes')(User);
 storyRouter = require('./routes/StoryRoutes')(Story);
-profileRouter = require('./routes/ProfileRoutes')(Story);
+profileRouter = require('./routes/ProfileRoutes')(User);
 
 /*
     SET '/uploads' directory to static (for public access)

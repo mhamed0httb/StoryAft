@@ -35,13 +35,79 @@ const { JwtSecret, ServerName } = require('../config/Keys');
 
 var profileController = (User) => {
 
+    var uploadProfileImage = (req, res) => {
+        upload.single('profileImage')(req, res, (err) => {
+            if (err instanceof multer.MulterError) {
+                // A Multer error occurred when uploading.
+                console.log(err);
+                const apiResponse = responseModel(false, err.code, null);
+                res.status(500).json(apiResponse);
+            } else if (err) {
+                // An unknown error occurred when uploading.
+                console.log(err);
+                const apiResponse = responseModel(false, err, null);
+                res.status(403).json(apiResponse);
+            } else {
+                let user = req.authData.user;
+                let profileImgPath = ServerName + req.file.path;
+                console.log(user._id);
+                console.log(user);
+                User.findById(user._id, (err, found) => {
+                    console.log("User found from MongoDB");
+                    console.log(found);
+                    console.log("*****");
+                    if (err) {
+                        const apiResponse = responseModel(false, "User not found", null);
+                        res.status(404).json(apiResponse);
+                    } else {
+                        found.image = profileImgPath;
+                        found.save((errSave) => {
+                            if (errSave) {
+                                const apiResponse = responseModel(false, errSave, null);
+                                res.status(500).json(apiResponse);
+                            } else {
+                                const apiResponse = responseModel(true, "Profile image uploaded with success", found);
+                                res.json(apiResponse);
+                            }
+                        });
+                    }
+                });
+
+            }
+        });
+    }
+
     var getProfile = (req, res) => {
         let data = req.authData;
         let token = req.token;
-        data.user.token = token;
-        let apiData = data.user;
-        const apiResponse = responseModel(true, "User Profile", apiData);
-        res.status(403).json(apiResponse);
+
+        User.findById(data.user._id, (err, found) => {
+            if (err) {
+                const apiResponse = responseModel(false, "User not found", null);
+                res.status(404).json(apiResponse);
+            } else {
+                const createdOn = Math.floor(found.createdOn / 1000);
+                let apiData = {
+                    _id: found._id,
+                    firstName: found.firstName,
+                    lastName: found.lastName,
+                    email: found.email,
+                    createdOn,
+                    image: found.image,
+                    token: token
+                }
+                const apiResponse = responseModel(true, "User Profile", apiData);
+                res.json(apiResponse);
+            }
+        })
+
+
+        /*
+         data.user.token = token;
+         let apiData = data.user;
+         const apiResponse = responseModel(true, "User Profile", apiData);
+         res.json(apiResponse);
+        */
     };
 
     var verifyToken = (req, res, next) => {
@@ -69,7 +135,8 @@ var profileController = (User) => {
 
     return {
         verifyToken,
-        getProfile
+        getProfile,
+        uploadProfileImage
     }
 };
 
