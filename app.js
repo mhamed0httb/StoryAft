@@ -12,22 +12,42 @@ const db = mongoose.connect(MongoURI, { useNewUrlParser: true }, (err) => {
     }
 });
 
+/*
+    MODELS
+*/
 var User = require('./models/User');
 var Story = require('./models/Story');
 
+/*
+    APP & PORT
+*/
 const app = express();
 var port = process.env.PORT || 3000;
 
+/*
+    ROUTES
+*/
 authRouter = require('./routes/AuthRoutes')(User);
 storyRouter = require('./routes/StoryRoutes')(Story);
+profileRouter = require('./routes/ProfileRoutes')(Story);
 
+/*
+    SET '/uploads' directory to static (for public access)
+*/
 app.use('/uploads', express.static('uploads'));
 
+/*
+    BodyParser to parse JSON Request Body
+*/
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+/*
+    APP URL's
+*/
 app.use('/api/auth', authRouter);
 app.use('/api/story', storyRouter);
+app.use('/api/profile', profileRouter);
 
 app.get('/', (req, res) => {
     res.send('Welcome to my API');
