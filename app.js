@@ -28,7 +28,7 @@ var port = process.env.PORT || 3000;
     ROUTES
 */
 authRouter = require('./routes/AuthRoutes')(User);
-storyRouter = require('./routes/StoryRoutes')(Story);
+storyRouter = require('./routes/StoryRoutes')(Story, User);
 profileRouter = require('./routes/ProfileRoutes')(User);
 
 /*

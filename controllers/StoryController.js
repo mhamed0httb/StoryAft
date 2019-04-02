@@ -41,7 +41,7 @@ const upload = multer(
 
 const { JwtSecret, ServerName } = require('../config/Keys');
 
-var storyController = (Story) => {
+var storyController = (Story, User) => {
 
     var postCreate = (req, res) => {
         jwt.verify(req.token, JwtSecret, (err, authData) => {
@@ -242,6 +242,7 @@ var storyController = (Story) => {
                     let storyImgPath = ServerName + req.files['storyImage'][0].path;
                     story.coverImage = storyImgPath;
 
+                    story.owner = req.authData.user._id;
 
                     new Story(story).save((errSave, savedStory) => {
                         if (errSave) {
@@ -261,16 +262,38 @@ var storyController = (Story) => {
                                 };
                                 apiEvents.push(oneEvent);
                             });
-                            const apiStory = {
-                                _id: savedStory._id,
-                                title: savedStory.title,
-                                description: savedStory.description,
-                                coverImage: savedStory.coverImage,
-                                events: apiEvents
-                            };
 
-                            const apiResponse = responseModel(true, "Story saved successfully", apiStory);
-                            res.json(apiResponse);
+                            /*
+                                Find the owner
+                            */
+                            User.findById(savedStory.owner, (errOwner, foundOwner) => {
+                                if (errOwner) {
+                                    const apiResponse = responseModel(false, errOwner, null);
+                                    res.json(apiResponse);
+                                } else {
+                                    const createdOn = Math.floor(foundOwner.createdOn / 1000);
+                                    const apiOwner = {
+                                        _id: foundOwner._id,
+                                        firstName: foundOwner.firstName,
+                                        lastName: foundOwner.lastName,
+                                        email: foundOwner.email,
+                                        createdOn,
+                                        image: foundOwner.image
+                                    };
+                                    const apiStory = {
+                                        _id: savedStory._id,
+                                        title: savedStory.title,
+                                        description: savedStory.description,
+                                        coverImage: savedStory.coverImage,
+                                        events: apiEvents,
+                                        owner: apiOwner
+                                    };
+
+                                    const apiResponse = responseModel(true, "Story saved successfully", apiStory);
+                                    res.json(apiResponse);
+                                }
+                            });
+
                         }
                     });
                 }
@@ -293,6 +316,7 @@ var storyController = (Story) => {
                     .sort({
                         createdOn: 'desc'
                     })
+                    .populate('owner')
                     .exec((errGet, stories) => {
                         if (errGet) {
                             const apiResponse = responseModel(false, errGet, null);
@@ -314,6 +338,7 @@ var storyController = (Story) => {
                     .sort({
                         createdOn: 'desc'
                     })
+                    .populate('owner')
                     .exec((errGet, stories) => {
                         if (errGet) {
                             const apiResponse = responseModel(false, errGet, null);
@@ -336,6 +361,7 @@ var storyController = (Story) => {
                 .sort({
                     createdOn: 'desc'
                 })
+                .populate('owner')
                 .exec((errGet, stories) => {
                     if (errGet) {
                         const apiResponse = responseModel(false, errGet, null);
@@ -369,12 +395,23 @@ var storyController = (Story) => {
                 apiEvents.push(oneEvent);
             });
 
+            const ownerDateStampInMillis = Math.floor(item.owner.createdOn / 1000);
+            const oneOwner = {
+                _id: item.owner._id,
+                firstName: item.owner.firstName,
+                lastName: item.owner.lastName,
+                email: item.owner.email,
+                createdOn: ownerDateStampInMillis,
+                image: item.owner.image
+            };
+
             const oneStory = {
                 _id: item._id,
                 title: item.title,
                 description: item.description,
                 coverImage: item.coverImage,
-                events: apiEvents
+                events: apiEvents,
+                owner: oneOwner
             };
             apiStories.push(oneStory);
         });

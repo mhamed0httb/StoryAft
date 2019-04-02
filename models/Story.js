@@ -1,5 +1,6 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
+//var User = require('./User');
 
 var storySchema = new Schema({
     title: {
@@ -34,6 +35,11 @@ var storySchema = new Schema({
             }
         }
     ],
+    owner: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
     createdOn: {
         type: Date,
         default: Date.now

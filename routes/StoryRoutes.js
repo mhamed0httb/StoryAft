@@ -1,9 +1,9 @@
 const express = require('express');
 
-var routes = (Story) => {
+var routes = (Story, User) => {
     const storyRouter = express.Router();
 
-    const storyController = require('../controllers/StoryController')(Story);
+    const storyController = require('../controllers/StoryController')(Story, User);
 
     storyRouter.route('/create').post(storyController.verifyToken, storyController.postCreateStory);
 
