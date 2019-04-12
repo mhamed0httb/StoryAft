@@ -13,11 +13,11 @@ var jwtSecret = 'secretkey';
     Server URL (for storing images full url)
 */
 var localServerName = 'http://localhost:3000/';
-var remoteServerName = '';
+var remoteServerName = 'https://story-aft-api.herokuapp.com/';
 
 
 module.exports = {
-    MongoURI: localDbURI,
+    MongoURI: remoteDbURI,
     JwtSecret: jwtSecret,
-    ServerName: localServerName
+    ServerName: remoteServerName
 }; 
