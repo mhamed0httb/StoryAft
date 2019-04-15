@@ -1,4 +1,4 @@
-const responseModel = require('../models/responseModel');
+const responseModel = require('../models/ResponseModel');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 
