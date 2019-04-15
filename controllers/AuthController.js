@@ -15,41 +15,45 @@ var authController = (User) => {
                 const apiResponse = responseModel(false, err, null);
                 res.json(apiResponse);
             } else {
-
-                bcrypt.compare(requestBody.password, user.password, (errCompare, result) => {
-                    if (errCompare) {
-                        console.log(errCompare);
-                        const apiResponse = responseModel(false, errCompare, null);
-                        res.json(apiResponse);
-                    } else {
-                        if (result) {
-                            const userTimeStampInMillis = Math.floor(user.createdOn / 1000);
-                            apiUser = {
-                                _id: user._id,
-                                firstName: user.firstName,
-                                lastName: user.lastName,
-                                email: user.email,
-                                createdOn: userTimeStampInMillis
-                            };
-
-                            jwt.sign({ user: apiUser }, JwtSecret, { expiresIn: '30d' }, (errJwt, token) => {
-                                if (errJwt) {
-                                    console.log(errJwt);
-                                    const apiResponse = responseModel(false, errJwt, null);
-                                    res.json(apiResponse);
-                                } else {
-                                    apiUser.token = token;
-                                    const apiResponse = responseModel(true, "User logged in", apiUser);
-                                    res.json(apiResponse);
-                                }
-                            });
-                           
-                        } else {
-                            const apiResponse = responseModel(false, "Invalid Password", null);
+                if (user == null) {
+                    const apiResponse = responseModel(false, "Invalid credentials", null);
+                    res.json(apiResponse);
+                } else {
+                    bcrypt.compare(requestBody.password, user.password, (errCompare, result) => {
+                        if (errCompare) {
+                            console.log(errCompare);
+                            const apiResponse = responseModel(false, errCompare, null);
                             res.json(apiResponse);
+                        } else {
+                            if (result) {
+                                const userTimeStampInMillis = Math.floor(user.createdOn / 1000);
+                                apiUser = {
+                                    _id: user._id,
+                                    firstName: user.firstName,
+                                    lastName: user.lastName,
+                                    email: user.email,
+                                    createdOn: userTimeStampInMillis
+                                };
+
+                                jwt.sign({ user: apiUser }, JwtSecret, { expiresIn: '30d' }, (errJwt, token) => {
+                                    if (errJwt) {
+                                        console.log(errJwt);
+                                        const apiResponse = responseModel(false, errJwt, null);
+                                        res.json(apiResponse);
+                                    } else {
+                                        apiUser.token = token;
+                                        const apiResponse = responseModel(true, "User logged in", apiUser);
+                                        res.json(apiResponse);
+                                    }
+                                });
+
+                            } else {
+                                const apiResponse = responseModel(false, "Invalid Password", null);
+                                res.json(apiResponse);
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
         });
     };
@@ -138,7 +142,7 @@ var authController = (User) => {
             res.json(apiResponse);
         }
     };
-    
+
 
     return {
         postLogin,
